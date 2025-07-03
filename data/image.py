@@ -29,10 +29,7 @@ class Image(Media):
             rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
             return cv2.warpAffine(self.content, rotation_matrix, shape, flags=cv2.INTER_LINEAR)
 
-    def apply_mask(self, mask: np.ndarray) -> np.ndarray:
-        '''
-            apply mask to the original image according to the coords in mask 
-        '''
+    def mask(self, mask: np.ndarray) -> np.ndarray:
         if not self.is_empty():
             return cv2.bitwise_and(self.content, mask)
 

@@ -1,0 +1,9 @@
+
+framework:
+  name: ultralytics
+
+model:
+  architecture: fastsam
+  framework: ultralytics
+  path: hub/models/FastSAM-s.pt
+  weights:  
