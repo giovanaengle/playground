@@ -15,8 +15,11 @@ class Annotation:
 
 @dataclass
 class Annotations(Media):
+    name: str
+    suffix: str | None
+
     items: list[Annotation] = field(default_factory=lambda: [])
-    path: Path | None = None
+    parent: Path | None = None
 
     def add(self, anno: Annotation) -> None:
         self.items.append(anno)
@@ -79,7 +82,8 @@ class Annotations(Media):
                 self.add(anno)
 
     def save(self) -> None:
-        with open(self.path, 'w') as file:
+        path = self.parent.joinpath(self.name, self.suffix)
+        with open(path, 'w', encoding='utf-8') as file:
             for anno in self.items:
                 coords: list[str] = []
                 if anno.points.size > 0:

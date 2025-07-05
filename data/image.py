@@ -4,23 +4,18 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-import pandas as pd
-import urllib.request
 
 from .labels import Bbox
 from .media import Media
 
 
-img_formats: list[str] = ['.jpg', '.jpeg', '.png']
-
-
 @dataclass
 class Image(Media):
     name: str
-    parent: Path
     suffix: str
 
     content: np.ndarray = field(default_factory=lambda: np.empty((0)))
+    parent: Path | None = None
 
     def align(self, angle: float) -> np.ndarray:
         if not self.is_empty():
@@ -28,10 +23,6 @@ class Image(Media):
             center = tuple(np.ndarray(shape) / 2)
             rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
             return cv2.warpAffine(self.content, rotation_matrix, shape, flags=cv2.INTER_LINEAR)
-
-    def mask(self, mask: np.ndarray) -> np.ndarray:
-        if not self.is_empty():
-            return cv2.bitwise_and(self.content, mask)
 
     def compute_skew(self) -> int:
         if not self.is_empty():
@@ -72,6 +63,10 @@ class Image(Media):
             x1, y1, x2, y2 = bbox.coords
             return self.content[y1 : y2, x1 : x2, :]
 
+    def decode(self) -> np.ndarray:
+        if not self.is_empty():
+            return cv2.imdecode(self.content, cv2.IMREAD_COLOR)
+    
     def draw_circle(self, center_coords: tuple[int,int], radius: int = 0, color: tuple[int,int,int] = (0,0,255), thickness: int = 100) -> np.ndarray:
         if not self.is_empty():
             return cv2.circle(self.content, center_coords, radius, color, thickness)
@@ -85,14 +80,22 @@ class Image(Media):
         if not self.is_empty():    
             _, encoded_image = cv2.imencode(self.suffix, self.content)
             return encoded_image
-        
+
+    def from_bytes(self, data: bytes) -> None:
+        self.content = np.asarray(bytearray(data), dtype=np.uint8)
+
     def is_empty(self) -> bool:
         return self.content.size <= 0
     
     def load(self) -> None:
         if self.is_empty():
-            self.content = cv2.imread(self.path(), cv2.IMREAD_UNCHANGED)
+            path = self.parent.joinpath(self.name, self.suffix)
+            self.content = cv2.imread(path, cv2.IMREAD_UNCHANGED)
 
+    def mask(self, mask: np.ndarray) -> np.ndarray:
+        if not self.is_empty():
+            return cv2.bitwise_and(self.content, mask)
+        
     def path(self) -> Path:
         return self.parent.joinpath(f'{self.name}{self.suffix}')
     
@@ -139,7 +142,8 @@ class Image(Media):
 
     def save(self) -> None:
         if not self.is_empty():
-            cv2.imwrite(self.path(), self.content)
+            path = self.parent.joinpath(self.name, self.suffix)
+            cv2.imwrite(path, self.content)
 
     def show(self, legend: str = 'image') -> None:
         if not self.is_empty():

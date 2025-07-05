@@ -9,7 +9,6 @@ from .text import Text
 @dataclass
 class Data:
     name: str
-    path: Path
 
     annotations: Annotations | None = None
     image: Image | None = None
@@ -20,7 +19,6 @@ class Data:
             annotations=self.annotations.copy(),
             image=self.image.copy(),
             name=self.name,
-            path=Path(self.path.absolute()),
         )
 
     def load(self) -> None:
@@ -28,9 +26,8 @@ class Data:
         self.image.load()
 
     def move(self, dst: Path) -> None:
-        self.annotations.path = dst.joinpath(self.annotations.path.name)
-        self.image.parent = dst
-        self.path = dst.joinpath(self.path.name)
+        self.annotations.move()
+        self.image.move()
 
     def save(self) -> None:
         self.annotations.save()

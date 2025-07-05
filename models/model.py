@@ -8,15 +8,25 @@ from ultralytics import FastSAM, NAS, RTDETR, SAM, YOLO, YOLOWorld
 from common import Config
 
 
-@dataclass
 class Model(ABC):
-    config: Config
-    
     classes: dict[int, str] = field(default_factory=lambda: {})
     model: Any | None = None
-    name: str | None = None
-    path: Path | None = None
-    weights: Any | None = None
+
+    def __init__(self, config: Config) -> None:
+        self.config = config
+
+        self.name = config.str('architecture')
+        self.weights = config.str('weights')
+        self.path = Path(config.str('path'))
+        if not self.path.exists():
+            raise Exception(f'Model path does not exist: {self.path}')
+
+        self._set()
+
+    def _set(self) -> None:
+        self.load()
+        self.categories()
+        self.info() 
 
     @abstractmethod
     def categories(self) -> None:
@@ -30,19 +40,10 @@ class Model(ABC):
     def load(self) -> None:
         NotImplemented
 
-    def set(self) -> None:
-        self.name = self.config.str('architecture')
-        self.weights = self.config.str('weights')
-        self.path = Path(self.config.str('path'))
-
-        if not self.path.exists():
-            raise Exception(f'Model path does not exist: {path}')
-
-        self.load()
-        self.categories()
-        self.info()
-
 class ULModel(Model):
+    def __init__(self, config: Config):
+        super().__init__(config)
+    
     def _create(self) -> Any:
         networks: dict[str, Any] = {
             'fastsam': FastSAM,
@@ -57,6 +58,9 @@ class ULModel(Model):
             return networks[self.name]       
         else:
             raise Exception(f'Model not implemented: {self.name}')
+    
+    def _set(self) -> None:
+        super()._set()
 
     def categories(self) -> None:
         if self.model:
@@ -80,6 +84,3 @@ class ULModel(Model):
             self.model = architecture(self.path).load(self.weights)
         else:
             self.model = architecture(self.path)
-    
-    def set(self) -> None:
-        super().set()

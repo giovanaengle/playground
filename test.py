@@ -13,13 +13,16 @@ def get_args() -> argparse.Namespace:
 if __name__ == '__main__':
     args = get_args()
 
+    # Config 
     config = Config(path=args.config_path)
-
     model_config = config.sub('model')
-    model_engine = ModelFactory.create(model_config)
-    model_engine.set()
-
     framework_config = config.sub('framework')
+
+    # Framework
     framework = FrameworkFactory.create(framework_config)
-    print(framework)
+    
+    # Model
+    model_engine = ModelFactory.create(model_config)
+
+
 
