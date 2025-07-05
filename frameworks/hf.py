@@ -1,16 +1,16 @@
 from dataclasses import dataclass
 from typing import Any
 
-from data.annotation import Annotation
+from data import Annotations
 from .framework import Framework
 
 
 @dataclass
 class HfFramework(Framework):
-    def _to_annotation(self) -> Annotation:
+    def _to_annotation(self) -> Annotations:
         NotImplemented 
 
-    def predict(self) -> Annotation:
+    def predict(self) -> Annotations:
         NotImplemented
 
     def train(self) -> Any:

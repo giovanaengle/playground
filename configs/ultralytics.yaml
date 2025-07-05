@@ -2,6 +2,9 @@
 framework:
   name: ultralytics
 
+data:
+  input: .experiments/vehicle
+
 model:
   architecture: fastsam
   framework: ultralytics

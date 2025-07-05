@@ -20,14 +20,15 @@ class Data:
             image=self.image.copy(),
             name=self.name,
         )
-
+    
     def load(self) -> None:
         self.annotations.load()
         self.image.load()
 
     def move(self, dst: Path) -> None:
-        self.annotations.move()
-        self.image.move()
+        self.annotations.parent = dst
+        self.image.parent = dst
+        self.text.parent = dst
 
     def save(self) -> None:
         self.annotations.save()

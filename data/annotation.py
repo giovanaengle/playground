@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from .labels import Bbox, Points2D
 from .media import Media
@@ -15,14 +14,13 @@ class Annotation:
 
 @dataclass
 class Annotations(Media):
-    name: str
-    suffix: str | None
-
     items: list[Annotation] = field(default_factory=lambda: [])
-    parent: Path | None = None
 
     def add(self, anno: Annotation) -> None:
         self.items.append(anno)
+
+    def clean(self) -> None:
+        self.items.clear()
 
     def copy(self) -> 'Annotations':
         return Annotations(
@@ -33,18 +31,24 @@ class Annotations(Media):
     def delete(self, anno: Annotation) -> None:
         self.items.remove(anno)
 
-    def empty(self) -> None:
-        self.items.clear()
+    def is_empty(self) -> bool:
+        return len(self.items) <= 0 
     
     def load(self) -> None:
-        if not self.path.exists() or len(self.items) > 0:
+        if not self.is_empty:
             return
+        
+        super().load()
 
-        with open(self.path, 'r') as file:
+        path = self.parent.joinpath(f'{self.name}{self.suffix}')
+        if not path.exists():
+            return
+        with open(path, 'r') as file:
             lines = file.readlines()
 
             if not lines:
                 self.items.append(Annotation())
+                return
 
             for line in lines:
                 parts = line.replace('\n', '').split(' ')
@@ -54,22 +58,24 @@ class Annotations(Media):
 
                 coords_length = len(parts[1:])
                 if coords_length == 5:
-                    bbox = Bbox(coords = [float(n) for n in parts[1:5]])
-                    Bbox(orientation = parts[5])
+                    bbox = Bbox(coords=[float(n) for n in parts[1:5]])
+                    Bbox(orientation=parts[5])
                 elif coords_length == 4:
-                    bbox = Bbox([float(n) for n in parts[1:]])
+                    bbox = Bbox(coords=parts[1:])
+                    bbox.to_float()
                 else:
                     points2D = Points2D([float(n) for n in parts[1:]])
 
                 self.items.append(Annotation(
                     bbox=bbox,
                     class_id=int(parts[0]),
-                    points2D=points2D,
+                    points=points2D,
                 ))
+        print(self.items)
 
     def merge(self, config: dict[str, str]) -> None:
         items: list[Annotation] = self.copy()
-        self.empty()
+        self.clean()
 
         classes = config['classes']
         merges = config['merges']

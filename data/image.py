@@ -11,11 +11,7 @@ from .media import Media
 
 @dataclass
 class Image(Media):
-    name: str
-    suffix: str
-
     content: np.ndarray = field(default_factory=lambda: np.empty((0)))
-    parent: Path | None = None
 
     def align(self, angle: float) -> np.ndarray:
         if not self.is_empty():
@@ -65,8 +61,8 @@ class Image(Media):
 
     def decode(self) -> np.ndarray:
         if not self.is_empty():
-            return cv2.imdecode(self.content, cv2.IMREAD_COLOR)
-    
+            return cv2.imdecode(self.content, cv2.IMREAD_COLOR)     
+
     def draw_circle(self, center_coords: tuple[int,int], radius: int = 0, color: tuple[int,int,int] = (0,0,255), thickness: int = 100) -> np.ndarray:
         if not self.is_empty():
             return cv2.circle(self.content, center_coords, radius, color, thickness)
@@ -81,15 +77,19 @@ class Image(Media):
             _, encoded_image = cv2.imencode(self.suffix, self.content)
             return encoded_image
 
-    def from_bytes(self, data: bytes) -> None:
-        self.content = np.asarray(bytearray(data), dtype=np.uint8)
+    def from_bytes(self, data: bytes) -> np.ndarray:
+        return np.asarray(bytearray(data), dtype=np.uint8)
 
     def is_empty(self) -> bool:
         return self.content.size <= 0
     
     def load(self) -> None:
         if self.is_empty():
-            path = self.parent.joinpath(self.name, self.suffix)
+            super().load()
+        
+            path = self.parent.joinpath(f'{self.name}{self.suffix}')
+            if not path.exists():
+                return 
             self.content = cv2.imread(path, cv2.IMREAD_UNCHANGED)
 
     def mask(self, mask: np.ndarray) -> np.ndarray:

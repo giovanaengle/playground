@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 
 
+@dataclass
 class Label(ABC):
     coords: list[float | int] | None = None
 
@@ -29,7 +30,8 @@ class Label(ABC):
         return np.array(self.coords)
     
     def to_float(self) -> None:
-        self.coords = [float(p) for p in self.coords] 
+        float_bbox = [float(p) for p in self.coords] 
+        self.coords = [round(f, 4) for f in float_bbox]
     
     def to_int(self) -> None:
         self.coords = [int(p) for p in self.coords] 

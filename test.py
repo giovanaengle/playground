@@ -2,6 +2,7 @@ import argparse
 
 from common import Config
 from frameworks import FrameworkFactory
+from ingestor import InputFactory
 from models import ModelFactory
 
 
@@ -15,14 +16,22 @@ if __name__ == '__main__':
 
     # Config 
     config = Config(path=args.config_path)
+    data_config = config.sub('data')
     model_config = config.sub('model')
     framework_config = config.sub('framework')
 
-    # Framework
-    framework = FrameworkFactory.create(framework_config)
+    # Data
+    input = InputFactory.create(data_config)
+    total= input.size()
+    # print(input.files)
+    for data in input.load():
+        data.load() 
+
+    # # Framework
+    # framework = FrameworkFactory.create(framework_config)
     
-    # Model
-    model_engine = ModelFactory.create(model_config)
+    # # Model
+    # model_engine = ModelFactory.create(model_config)
 
 
 
