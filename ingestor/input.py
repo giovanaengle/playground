@@ -8,6 +8,7 @@ import pandas as pd
 
 from common import Config
 from data import Annotation, Annotations, Data, Image, Text
+from .download import Downloader
 
 
 @dataclass
@@ -26,15 +27,17 @@ class Input(ABC):
             labels = str(path)
             if ',' in labels:
                 content = labels.split(';')
-                for label in content:
-                    anno = Annotation(
-                        class_name=label
-                    )
-                    items.append(anno)
             else:
-                items = [labels]
-            parent = None
+                content = [labels]
 
+            for label in content:
+                anno = Annotation(
+                    class_name=label
+                )
+                items.append(anno)
+            
+            parent = None
+        
         annotations: Annotations = Annotations(
             items=items,
             name=self.name,
@@ -89,27 +92,35 @@ class Input(ABC):
 
 class CSVInput(Input):
     df: pd.DataFrame
+    downloader: Downloader
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, downloader: Downloader) -> None:
         super().__init__(path=path)
         self.df = pd.read_csv(self.path)
+        self.downloader = downloader
+
+    def _parse_input(self, path: str) -> Path:
+        if path.startswith('http'):
+            path = self.downloader.download(path)
+        else:
+            path = Path(path)
+        return path
 
     def load(self) -> Generator[Data, None, None]:
+        columns = self.df.columns.tolist()
         for _, row in self.df.iterrows():
             annotations, image, text = None, None, None
 
-            if 'image' in row:
-                img_path = str(row['image'])
+            if 'image' in columns:
+                img_path = self._parse_input(row['image'])
                 image = super()._load_img(img_path)
-            if 'text' in row:
-                text = str(row['text'])
-                text = super()._load_text(text)
-            if 'annotations' in row:
-                annotations = str(row['annotations'])
-                annotations = super()._load_anno(annotations)
-            else:
-                raise Exception(f'No data found: missing columns annotation, image, or text in the csv file {self.path}')
-
+            if 'text' in columns:
+                text_path = self._parse_input(row['text'])
+                text = super()._load_text(text_path)
+            if 'annotation' in columns:
+                anno_path = self._parse_input(row['annotation'])
+                annotations = super()._load_anno(anno_path)
+            
             data: Data = Data(
                 annotations=annotations,
                 image=image,
@@ -183,6 +194,7 @@ class InputFactory:
         if path.suffix == '.csv':
             return CSVInput(
                 path=path,
+                downloader=Downloader(),
             )
         elif path.is_dir():
             return DirInput(

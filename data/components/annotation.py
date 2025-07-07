@@ -35,14 +35,13 @@ class Annotations(Media):
         return len(self.items) <= 0 
     
     def load(self) -> None:
-        if not self.is_empty:
+        if not self.parent or not self.is_empty:
             return
-        
-        super().load()
 
         path = self.parent.joinpath(f'{self.name}{self.suffix}')
         if not path.exists():
-            return
+            raise Exception(f'Data not found in the designated path: {str(path)}')
+        
         with open(path, 'r') as file:
             lines = file.readlines()
 
@@ -70,8 +69,7 @@ class Annotations(Media):
                     bbox=bbox,
                     class_id=int(parts[0]),
                     points=points2D,
-                ))
-        print(self.items)
+                ))  
 
     def merge(self, config: dict[str, str]) -> None:
         items: list[Annotation] = self.copy()

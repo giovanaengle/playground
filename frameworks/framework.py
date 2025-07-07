@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from common import Config
-from data.annotation import Annotations
-from data.data import Data
+from data.components.annotation import Annotations
+from data.components.data import Data
 from models import Model
 
 
@@ -23,8 +23,14 @@ class Framework(ABC):
     def predict(self) -> Annotations:
         NotImplemented
 
+    @abstractmethod
+    def to_dataset(self) -> None:
+        NotImplemented
+
+    @abstractmethod
     def train(self) -> Any:
         NotImplemented
 
+    @abstractmethod
     def validate(self) -> Any:
         NotImplemented

@@ -13,6 +13,9 @@ class HfFramework(Framework):
     def predict(self) -> Annotations:
         NotImplemented
 
+    def to_dataset(self) -> None:
+        NotImplemented
+
     def train(self) -> Any:
         NotImplemented
 

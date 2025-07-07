@@ -84,13 +84,13 @@ class Image(Media):
         return self.content.size <= 0
     
     def load(self) -> None:
-        if self.is_empty():
-            super().load()
+        if not self.parent or not self.is_empty():
+            return
         
-            path = self.parent.joinpath(f'{self.name}{self.suffix}')
-            if not path.exists():
-                return 
-            self.content = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+        path = self.parent.joinpath(f'{self.name}{self.suffix}')
+        if not path.exists():
+            return 
+        self.content = cv2.imread(path, cv2.IMREAD_UNCHANGED)
 
     def mask(self, mask: np.ndarray) -> np.ndarray:
         if not self.is_empty():

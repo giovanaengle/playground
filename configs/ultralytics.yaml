@@ -3,7 +3,7 @@ framework:
   name: ultralytics
 
 data:
-  input: .experiments/vehicle
+  input: .experiments/vehicle/database.csv
 
 model:
   architecture: fastsam

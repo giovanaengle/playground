@@ -1,6 +1,11 @@
-from .annotation import Annotation, Annotations
-from .data import Data
-from .image import Image
-from .text import Text
+from .components import (
+    Annotation, 
+    Annotations, 
+    Bbox, 
+    Data,
+    Image,
+    Points2D,
+    Text,
+)
 
-__all__ = ('Annotation', 'Annotations', 'Data', 'Image', 'Text')
+__all__ = ('Annotation', 'Annotations', 'Bbox', 'Data', 'Image', 'Points2D', 'Text')

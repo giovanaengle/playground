@@ -4,8 +4,7 @@ from ultralytics import settings
 from ultralytics.engine.results import Results
 from ultralytics.utils import metrics
 
-from data.annotation import Annotation, Annotations
-from data.labels import Bbox, Points2D
+from data import Annotation, Annotations, Bbox, Points2D
 from .framework import Framework
 
 
@@ -72,6 +71,9 @@ class UlFramework(Framework):
         results = self.model(source = self.data, **kwargs)
         return self._to_annotation(results[0])
 
+    def to_dataset(self):
+        return super().to_dataset()
+    
     def train(self) -> metrics:
         kwargs = self.config.dict('train')
         results = self.model.train(**kwargs)

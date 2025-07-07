@@ -23,15 +23,14 @@ if __name__ == '__main__':
     # Data
     input = InputFactory.create(data_config)
     total= input.size()
-    # print(input.files)
     for data in input.load():
-        data.load() 
+        data.load()
 
-    # # Framework
-    # framework = FrameworkFactory.create(framework_config)
+    # Framework
+    framework = FrameworkFactory.create(framework_config)
     
-    # # Model
-    # model_engine = ModelFactory.create(model_config)
+    # Model
+    model_engine = ModelFactory.create(model_config)
 
 
 
