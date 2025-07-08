@@ -25,7 +25,9 @@ class Annotations(Media):
     def copy(self) -> 'Annotations':
         return Annotations(
             items=self.items.copy(),
-            path=self.path,
+            name=self.name,
+            parent=self.parent,
+            suffix=self.suffix,
         )
     
     def delete(self, anno: Annotation) -> None:

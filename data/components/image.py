@@ -45,7 +45,8 @@ class Image(Media):
             return int((angle/cnt) * 180 / math.pi)
 
     def copy(self) -> None:
-        self.load()
+        if self.is_empty():
+            self.load()
 
         return Image(
             content=self.content.copy() if not self.is_empty() else np.empty((0)),
@@ -108,24 +109,26 @@ class Image(Media):
             elif len(size) == 1:
                 size = size[0]
                 proportional = True
-
-            if proportional:
+            
+            if not proportional:
+                dsize = size
+            else:
                 shape = self.content.shape[:2] # h,w
                 if shape[0] == shape[1]:
-                    size = [size, size]
+                    dsize = [size, size]
                 else:
                     max_idx = shape.index(max(shape))
                     min_idx = shape.index(min(shape))
 
                     proportion_factor = size/shape[max_idx]
-                    size = [0,0]
-                    size[min_idx] = size
-                    size[max_idx] = int(proportion_factor * shape[min_idx])
+                    dsize = [0,0]
+                    dsize[min_idx] = size
+                    dsize[max_idx] = int(proportion_factor * shape[min_idx])
 
             if multiple:
-                size = [max(math.ceil(x / multiple) * multiple, 0) for x in size]
+                dsize = [max(math.ceil(x / multiple) * multiple, 0) for x in dsize]
 
-            return cv2.resize(self.content, dsize=size, interpolation=cv2.INTER_AREA)
+            self.content = cv2.resize(self.content, dsize=dsize, interpolation=cv2.INTER_AREA)
 
     def rotate(self, angle: int) -> np.ndarray:
         if not self.is_empty():

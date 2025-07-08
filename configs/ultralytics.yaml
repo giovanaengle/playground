@@ -4,6 +4,15 @@ framework:
 
 data:
   input: .experiments/vehicle/database.csv
+  process:
+    processes:
+      - name: crop
+      - name: rename
+      - name: resize
+        params:
+          - 640
+    processor: linear
+
 
 model:
   architecture: fastsam
