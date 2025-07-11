@@ -2,8 +2,8 @@ import argparse
 
 from common import Config
 from data import Data, Job, ProcessFactory, Processor
-from frameworks import FrameworkFactory
-from ingestor import InputFactory
+from dataset import DatasetFactory
+from core import InputFactory
 from models import ModelFactory
 
 
@@ -18,6 +18,7 @@ if __name__ == '__main__':
     # Config 
     config = Config(path=args.config_path)
     data_config = config.sub('data')
+    dataset_config = config.sub('dataset')
     model_config = config.sub('model')
     framework_config = config.sub('framework')
 
@@ -28,15 +29,10 @@ if __name__ == '__main__':
     total= input.size()
     for data in input.load():
         data.load()
-        print(data.image.content.shape)
 
         job: Job = processes.process(data=data)
         data: Data = job.current[0]
         exit()
-
-
-    # Framework
-    framework = FrameworkFactory.create(framework_config)
     
     # Model
     model_engine = ModelFactory.create(model_config)

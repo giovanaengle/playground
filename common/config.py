@@ -26,7 +26,7 @@ class Config:
         value: list[dict] = self.items[key]
         return value
 
-    def floats(self, key: str) -> list[int]:
+    def floats(self, key: str) -> list[float]:
         return self.items[key]
 
     def ints(self, key: str) -> list[int]:

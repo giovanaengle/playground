@@ -2,11 +2,12 @@ from .components import (
     Annotation, 
     Annotations, 
     Bbox, 
-    Data,
+    Data, 
     Image,
+    Media,
     Points2D,
     Text,
 )
 from .processor import Job, ProcessFactory, Processor
 
-__all__ = ('Annotation', 'Annotations', 'Bbox', 'Data', 'Image', 'Job', 'Points2D', 'ProcessFactory', 'Processor', 'Text')
+__all__ = ('Annotation', 'Annotations', 'Bbox', 'Data', 'Image', 'Job', 'Media', 'Points2D', 'ProcessFactory', 'Processor', 'Text')

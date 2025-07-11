@@ -3,9 +3,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ultralytics import FastSAM, NAS, RTDETR, SAM, YOLO, YOLOWorld
-
 from common import Config
+from data import Annotations
+from .ul import ULModel
 
 
 class Model(ABC):
@@ -29,6 +29,10 @@ class Model(ABC):
         self.info() 
 
     @abstractmethod
+    def _to_annotation(self) -> Annotations:
+        NotImplemented 
+
+    @abstractmethod
     def categories(self) -> None:
         NotImplemented
 
@@ -40,47 +44,33 @@ class Model(ABC):
     def load(self) -> None:
         NotImplemented
 
-class ULModel(Model):
-    def __init__(self, config: Config):
-        super().__init__(config)
-    
-    def _create(self) -> Any:
-        networks: dict[str, Any] = {
-            'fastsam': FastSAM,
-            'nas': NAS,
-            'rtdetr': RTDETR,
-            'sam': SAM,
-            'yolo': YOLO,
-            'yoloworld': YOLOWorld,
-        }
+    @abstractmethod
+    def predict(self) -> Annotations:
+        NotImplemented
 
-        if self.name in networks:
-            return networks[self.name]       
+    @abstractmethod
+    def to_dataset(self) -> None:
+        NotImplemented
+
+    @abstractmethod
+    def train(self) -> Any:
+        NotImplemented
+
+    @abstractmethod
+    def validate(self) -> Any:
+        NotImplemented
+
+
+class ModelFactory:
+    models: dict[str, Model] = {
+        'ultralytics': ULModel,
+    }
+
+    @staticmethod
+    def create(config: Config) -> Model:
+        name = config.str('framework')
+        if name in ModelFactory.models:
+            return ModelFactory.models[name](config)
         else:
-            raise Exception(f'Model not implemented: {self.name}')
-    
-    def _set(self) -> None:
-        super()._set()
-
-    def categories(self) -> None:
-        if self.model:
-            self.classes = self.model.model.names
-        else:
-            raise FileNotFoundError(f'Model not found')
-
-    def info(self) -> None:
-        if self.model:
-            print(f'Architecture {self.name} technical information')
-            self.model.info()
-            print('\n')
-        else:
-            raise FileNotFoundError(f'Model not found')
-
-    def load(self) -> None:
-        architecture = self._create()
-        print(f'Loading model architecture {self.name} \n')
-
-        if self.weights:
-            self.model = architecture(self.path).load(self.weights)
-        else:
-            self.model = architecture(self.path)
+            raise Exception(f'Model framework not implemented: {name}')
+        

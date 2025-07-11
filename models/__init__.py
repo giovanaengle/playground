@@ -1,5 +1,4 @@
-from .factory import ModelFactory
-from .model import Model
+from model import Model, ModelFactory
 
 
-__all__ = ('Model', 'ModelFactory')
+__all__ = ('Model', 'ModelFactory',)

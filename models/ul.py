@@ -1,15 +1,41 @@
-from dataclasses import dataclass
+from typing import Any
 
-from ultralytics import settings
+from ultralytics import settings, FastSAM, NAS, RTDETR, SAM, YOLO, YOLOWorld
 from ultralytics.engine.results import Results
 from ultralytics.utils import metrics
 
-from data import Annotation, Annotations, Bbox, Points2D
-from .framework import Framework
+from common import Config
+from data import Annotation, Annotations, Bbox, Media, Points2D
+from model import Model
 
 
-@dataclass
-class UlFramework(Framework):
+class ULModel(Model):
+    def __init__(self, config: Config):
+        super().__init__(config)
+    
+    def _create(self) -> Any:
+        networks: dict[str, Any] = {
+            'fastsam': FastSAM,
+            'nas': NAS,
+            'rtdetr': RTDETR,
+            'sam': SAM,
+            'yolo': YOLO,
+            'yoloworld': YOLOWorld,
+        }
+
+        if self.name in networks:
+            return networks[self.name]       
+        else:
+            raise Exception(f'Model not implemented: {self.name}')
+    
+    def _set(self) -> None:
+        super()._set()
+
+    def _sys(self) -> None:
+        kwargs = self.config.dict('settings')
+        settings.update(**kwargs)
+        print(f'Settings: {settings}')
+
     def _to_annotation(self, results: Results) -> Annotations:
         if not results:
             return 
@@ -61,18 +87,33 @@ class UlFramework(Framework):
 
         return annotation
 
-    def _set_sys(self) -> None:
-        kwargs = self.config.dict('settings')
-        settings.update(**kwargs)
-        print(f'Settings: {settings}')
+    def categories(self) -> None:
+        if self.model:
+            self.classes = self.model.model.names
+        else:
+            raise FileNotFoundError(f'Model not found')
 
-    async def predict(self) -> Annotations:
+    def info(self) -> None:
+        if self.model:
+            print(f'Architecture {self.name} technical information')
+            self.model.info()
+            print('\n')
+        else:
+            raise FileNotFoundError(f'Model not found')
+
+    def load(self) -> None:
+        architecture = self._create()
+        print(f'Loading model architecture {self.name} \n')
+
+        if self.weights:
+            self.model = architecture(self.path).load(self.weights)
+        else:
+            self.model = architecture(self.path)
+
+    async def predict(self, data: Media) -> Annotations:
         kwargs = self.config.dict('predict')
-        results = self.model(source = self.data, **kwargs)
+        results = self.model(source=data, **kwargs)
         return self._to_annotation(results[0])
-
-    def to_dataset(self):
-        return super().to_dataset()
     
     def train(self) -> metrics:
         kwargs = self.config.dict('train')

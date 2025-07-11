@@ -1,6 +1,5 @@
-
-framework:
-  name: ultralytics
+experiment:
+  name: vehicle
 
 data:
   input: .experiments/vehicle/database.csv
@@ -12,10 +11,32 @@ data:
         params:
           - 640
     processor: linear
-
+  
+dataset:
+  balance: false
+  classes:
+    - ambulance
+    - bicycle
+    - Bus
+    - Jeepney
+    - Motorcycle
+    - Multicab
+    - Pickup
+    - SUV
+    - Sedan
+    - Truck
+    - Van
+  framework: ultralytics
+  path: .experiments/vehicle/dataset
+  split: # test, train, valid
+    - 0.2
+    - 0.6
+    - 0.2
+  task: detect
 
 model:
   architecture: fastsam
   framework: ultralytics
   path: hub/models/FastSAM-s.pt
-  weights:  
+  task: detect
+  weights: 
