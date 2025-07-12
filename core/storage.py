@@ -1,21 +1,25 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 from pathlib import Path
+from shutil import rmtree
 
 from common import Config
 from data import Data
 
 
-@dataclass
 class Storage(ABC):
-    path: Path
+    def __init__(self, path: Path):
+        self.path = path
+
+    @abstractmethod
+    def add(self, data: Data | list[Data]) -> None:
+        NotImplemented
 
     @abstractmethod
     def all(self) -> list[Data]:
         NotImplemented
-
+    
     @abstractmethod
-    def add(self, data: Data | list[Data]) -> None:
+    def clear(self, data: Data | list[Data]) -> None:
         NotImplemented
 
     @abstractmethod
@@ -30,13 +34,20 @@ class Storage(ABC):
     def set(self, name: str, data: Data) -> None:
         NotImplemented
 
+    def setup(self):
+        rmtree(self.path, ignore_errors=True, onexc=None)
+        self.path.mkdir(exist_ok=True, parents=True)
+
     @abstractmethod
     def unset(self, name: str) -> None:
         NotImplemented
 
-@dataclass
+
 class LocalStorage(Storage):
-    items: dict[str, Data] = field(default_factory=lambda: {})
+    items: dict[str, Data] = {}
+
+    def __init__(self, path: Path) -> None:
+        super().__init__(path)
 
     def add(self, data: Data | list[Data]) -> None:
         if type(data) == Data:
@@ -55,15 +66,25 @@ class LocalStorage(Storage):
         return self.items[name]
 
     def save(self) -> None:
-        self.path.mkdir(exist_ok=True, parents=True)
-
         for data in self.items.values():
-            data.move(self.path)
+            if data.annotations:
+                data.annotations.parent = self.path.joinpath('annotations')
+                data.annotations.parent.mkdir(parents=True, exist_ok=True)
+            if data.image:
+                data.image.parent = self.path.joinpath('images')
+                data.image.parent.mkdir(parents=True, exist_ok=True)
+            if data.text:
+                data.text.parent = self.path.joinpath('texts')
+                data.text.parent.mkdir(parents=True, exist_ok=True)
+
             data.save()
 
     def set(self, name: str, data: Data) -> None:
         self.items[name] = data
 
+    def setup(self):
+        return super().setup()
+    
     def unset(self, name: str) -> None:
         del self.items[name]
 

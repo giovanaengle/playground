@@ -26,8 +26,9 @@ class CropProcess(Process):
 
                 bbox.denormalize(height, width)
                 bbox.to_xyxy()
-                copy.image.crop(bbox)
+                bbox.to_int()
                 
+                copy.image.crop(bbox)
                 job.changes.append(copy)
 
 class MaskProcess(Process):

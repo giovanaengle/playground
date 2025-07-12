@@ -1,14 +1,10 @@
 from abc import abstractmethod
-from dataclasses import dataclass, field
 from enum import Enum
 import math
-from pathlib import Path
 from shutil import rmtree
 
 from common import Config
 from data import Data
-from dataset.hf import HFDataset
-from dataset.ul import ULDataset
 
 
 class DatasetFormat(Enum):
@@ -37,8 +33,8 @@ class Dataset:
     valid: list[Data] = []
 
     def __init__(self, config: Config) -> None:
-        classes = config.strs('classes'),
-        classes = [cls.lower() for cls in classes]
+        classes = config.strs('classes')
+        classes = [str(cls).lower() for cls in classes]
 
         self.balance = config.bool('balance')
         self.classes = classes
@@ -111,17 +107,3 @@ class Dataset:
     def setup(self) -> None:
         rmtree(self.path, ignore_errors=True, onexc=None)
         self.path.mkdir(exist_ok=True, parents=True)
-
-class DatasetFactory:
-    datasets: dict[str, Dataset] = {
-        'hugging_face': HFDataset,
-        'ultralytics': ULDataset,
-    }
-
-    @staticmethod
-    def create(config: Config) -> Dataset:
-        name = config.str('framework')
-        if name in DatasetFactory.datasets:
-            return DatasetFactory.datasets[name](config)
-        else:
-            raise Exception(f'Dataset framework not implemented: {name}')

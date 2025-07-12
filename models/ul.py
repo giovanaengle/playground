@@ -6,7 +6,7 @@ from ultralytics.utils import metrics
 
 from common import Config
 from data import Annotation, Annotations, Bbox, Media, Points2D
-from model import Model
+from .model import Model
 
 
 class ULModel(Model):

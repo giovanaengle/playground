@@ -13,3 +13,4 @@ class Job:
     def process_changes(self) -> None:
         if len(self.changes) > 0:
             self.current = [data for data in self.changes]
+            self.changes = []

@@ -143,9 +143,9 @@ class Image(Media):
 
             return cv2.rotate(self.content, rotate_code)
 
-    def save(self) -> None:
+    def save(self, name: str) -> None:
         if not self.is_empty():
-            path = self.parent.joinpath(self.name, self.suffix)
+            path = self.parent.joinpath(f'{name}{self.suffix}')
             cv2.imwrite(path, self.content)
 
     def show(self, legend: str = 'image') -> None:

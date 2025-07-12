@@ -15,14 +15,10 @@ from .download import Downloader
 class Input(ABC):
     path: Path
 
-    name: str | None = None
-
     def _load_anno(self, path: Path) -> Annotations:
         items = []
         if path.suffix:
             parent=path.parent
-            if not self.name:
-                self.name = path.stem
         else:
             labels = str(path)
             if ',' in labels:
@@ -40,7 +36,7 @@ class Input(ABC):
         
         annotations: Annotations = Annotations(
             items=items,
-            name=self.name,
+            name=str(path.stem),
             parent=parent,
             suffix=path.suffix
         )
@@ -48,11 +44,8 @@ class Input(ABC):
         return annotations
 
     def _load_img(self, path: Path) -> Image:
-        if not self.name:
-            self.name = str(path.stem)
-
         image: Image = Image(
-            name=self.name,
+            name=str(path.stem),
             parent=path.parent,
             suffix=path.suffix,
         )
@@ -63,8 +56,6 @@ class Input(ABC):
         if path.suffix:
             content = None
             parent = path.parent
-            if not self.name:
-                self.name = path.stem
         else:
             texts = str(path)
             if ',' in texts:
@@ -75,7 +66,7 @@ class Input(ABC):
 
         text: Text = Text(
             content=content,
-            name=self.name,
+            name=str(path.stem),
             parent=parent,
             suffix=path.suffix
         )
@@ -114,17 +105,22 @@ class CSVInput(Input):
             if 'image' in columns:
                 img_path = self._parse_input(row['image'])
                 image = super()._load_img(img_path)
+                name = image.name
+
             if 'text' in columns:
                 text_path = self._parse_input(row['text'])
                 text = super()._load_text(text_path)
+                name = text.name
+
             if 'annotation' in columns:
                 anno_path = self._parse_input(row['annotation'])
                 annotations = super()._load_anno(anno_path)
-            
+                name = annotations.name
+
             data: Data = Data(
                 annotations=annotations,
                 image=image,
-                name=self.name,
+                name=name,
                 text=text,
             )
             yield data
@@ -139,18 +135,18 @@ class DirInput(Input):
         super().__init__(path=path)
         self.files = []
         self.path = path
+        
+        self.files.extend(self.path.glob('images/*.jpg'))
+        self.files.extend(self.path.glob('images/*.jpeg'))
+        self.files.extend(self.path.glob('images/*.png'))
+        
+        if not len(self.files):
+            self.files.extend(self.path.glob('texts/*.txt'))
+        if not len(self.files):
+            self.files.extend(self.path.glob('annotations/*.txt'))
+        if not len(self.files):
+            raise Exception(f'Data not found in the path structure: {path}. Data must be in on of the folders: images, labels, or texts')
 
-        self.files.extend(self.path.glob('**/*.jpg'))
-        self.files.extend(self.path.glob('**/*.jpeg'))
-        self.files.extend(self.path.glob('**/*.png'))
-
-        if not self.files:
-            self.files.append(self.path.glob('texts/*.txt'))
-        if not self.files:
-            self.files.append(self.path.glob('labels/*.txt'))
-        if not self.files:
-            raise Exception(f'Data not found in the path structure: {path} \n', 'Data must be in on of the folders: images, labels, or texts')
-            
     def load(self) -> Generator[Data, None, None]:
         path: Path
         for path in self.files:
@@ -160,26 +156,28 @@ class DirInput(Input):
             if path.parent.name == 'images':
                 image = self._load_img(path=path)
                 path = str(path).replace(path.suffix, '.txt')
-                path = Path(path.replace('images', 'labels'))
+                path = Path(path.replace('images', 'annotations'))
                 if path.exists():
                     annotations = self._load_anno(path=path)
-                path = Path(str(path).replace('labels', 'texts'))
+                path = Path(str(path).replace('annotations', 'texts'))
                 if path.exists():
                     text = self._load_text(path=path)
-
+                name = image.name
             elif path.parent.name == 'texts':
                 text = self._load_text(path=path)
-                path = Path(str(path).replace('texts', 'labels'))
+                path = Path(str(path).replace('texts', 'annotations'))
                 if path.exists():
                     annotations = self._load_anno(path=path)
+                name = text.name
 
-            elif path.parent.name == 'labels':
+            elif path.parent.name == 'annotations':
                 annotations = self._load_anno(path=path)
-            
+                name = annotations.name
+
             data: Data = Data(
                 annotations=annotations,
                 image=image,
-                name=self.name,
+                name=name,
                 text=text,
             )
             yield data

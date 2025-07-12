@@ -2,10 +2,9 @@ experiment:
   name: vehicle
 
 data:
-  input: .experiments/vehicle/database.csv
+  input: .experiments/vehicle/
   process:
     processes:
-      - name: crop
       - name: rename
       - name: resize
         params:
@@ -27,6 +26,7 @@ dataset:
     - Truck
     - Van
   framework: ultralytics
+  input: .experiments/vehicle/storage
   path: .experiments/vehicle/dataset
   split: # test, train, valid
     - 0.2
@@ -40,3 +40,5 @@ model:
   path: hub/models/FastSAM-s.pt
   task: detect
   weights: 
+
+storage: .experiments/vehicle/storage

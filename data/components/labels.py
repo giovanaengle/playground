@@ -10,12 +10,12 @@ class Label(ABC):
     coords: list[float | int] | None = None
 
     def denormalize(self, height: int | float, width: int | float) -> None:
-        for idx, coord in self.coords:
+        for idx, coord in enumerate(self.coords):
             if idx % 2 != 0:
-                self.coords[idx] = round(coord * height, 4)
+                self.coords[idx] = int(coord * height)
             else:
-                self.coords[idx] = round(coord * width, 4) 
-    
+                self.coords[idx] = int(coord * width) 
+
     def normalize(self, height: int | float, width: int | float) -> None:
         for idx, coord in self.coords:
             if idx % 2 != 0:
@@ -80,8 +80,7 @@ class Bbox(Label):
         x2 = xc + w/2
         y1 = yc - h/2
         y2 = yc + h/2
-        coords = [x1, y1, x2, y2]
-        self.coords = [round(p,4) for p in coords]
+        self.coords = [x1, y1, x2, y2]
 
     def width(self) -> float:
         x1, x2 = self.coords[0], self.coords[2]

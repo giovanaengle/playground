@@ -1,14 +1,16 @@
-from dataclasses import dataclass
-
+from shutil import rmtree
 from ultralytics.utils.downloads import download
 from yaml import dump
 
+from common import Config
 from data import Annotation, Data
 from .dataset import Dataset, DatasetFormat
 
 
-@dataclass
 class ULDataset(Dataset):
+    def __init__(self, config: Config) -> None:
+        super().__init__(config)
+
     def _save_classify_data(self, data: Data, section: str) -> None:
         if not len(data.annotations.items):
             return

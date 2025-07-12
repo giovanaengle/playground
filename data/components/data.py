@@ -26,10 +26,17 @@ class Data:
         self.image.load()
 
     def move(self, dst: Path) -> None:
-        self.annotations.parent = dst
-        self.image.parent = dst
-        self.text.parent = dst
+        if self.annotations:
+            self.annotations.parent = dst
+        if self.image:
+            self.image.parent = dst
+        if self.text:
+            self.text.parent = dst
 
     def save(self) -> None:
-        self.annotations.save()
-        self.image.save()
+        if self.annotations:
+            self.annotations.save(self.name)
+        if self.image:
+            self.image.save(self.name)
+        if self.text:
+            self.text.save(self.name)

@@ -87,15 +87,16 @@ class Annotations(Media):
             else:
                 self.add(anno)
 
-    def save(self) -> None:
-        path = self.parent.joinpath(self.name, self.suffix)
+    def save(self, name: str) -> None:
+        path = self.parent.joinpath(f'{name}{self.suffix}')
         with open(path, 'w', encoding='utf-8') as file:
             for anno in self.items:
                 coords: list[str] = []
-                if anno.points.size > 0:
-                    coords = [f'{n}' for n in anno.points]
-                elif anno.bbox.size > 0:
-                    coords = [f'{n}' for n in anno.bbox]
+
+                if anno.bbox:
+                    coords = [f'{n}' for n in anno.bbox.coords]
+                if anno.points:
+                    coords = [f'{n}' for n in anno.points.coords]
 
                 if anno.class_id is not None:
                     file.write(f'{anno.class_id} {' '.join(coords)}\n')

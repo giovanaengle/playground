@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import field
 from pathlib import Path
 from typing import Any
 
 from common import Config
 from data import Annotations
-from .ul import ULModel
 
 
 class Model(ABC):
@@ -59,18 +58,3 @@ class Model(ABC):
     @abstractmethod
     def validate(self) -> Any:
         NotImplemented
-
-
-class ModelFactory:
-    models: dict[str, Model] = {
-        'ultralytics': ULModel,
-    }
-
-    @staticmethod
-    def create(config: Config) -> Model:
-        name = config.str('framework')
-        if name in ModelFactory.models:
-            return ModelFactory.models[name](config)
-        else:
-            raise Exception(f'Model framework not implemented: {name}')
-        
