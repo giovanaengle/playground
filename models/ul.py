@@ -3,6 +3,8 @@ from typing import Any
 from ultralytics import settings, FastSAM, NAS, RTDETR, SAM, YOLO, YOLOWorld
 from ultralytics.engine.results import Results
 from ultralytics.utils import metrics
+from ultralytics.utils.benchmarks import benchmark
+
 
 from common import Config
 from core import TaskType
@@ -42,6 +44,24 @@ class ULModel(Model):
             self.classes = self.model.model.names
         else:
             raise FileNotFoundError(f'Model not found')
+
+    def evaluate(self) -> None:
+        config = self.config.sub('evaluate')
+        data = config.str('data')
+        
+        evaluate_config = Config(path=config.str('config'))
+        kwargs = evaluate_config.dict('params')
+
+        benchmark(self.model, data=data, **kwargs)
+
+    def export(self) -> None:
+        config = self.config.sub('export')
+        data = config.str('data')
+        
+        export_config = Config(path=config.str('config'))
+        kwargs = export_config.dict('params')
+
+        self.model.export(data=data, **kwargs)
 
     def info(self) -> None:
         if self.model:

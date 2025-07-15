@@ -55,9 +55,11 @@ Version: 0.0
 - [x] test train
 - [x] test predict
 - [x] test val 
+- [x] add benchmark
+- [x] add export
+- [ ] save benchmark results in the project folder
 - [ ] add track
-- [ ] add benchmark
-- [ ] add export
+- [ ] recognition of available devices (gpu, mps, or cpu)
 
 # Processor
 - [x] Add linear process

@@ -65,7 +65,9 @@ if __name__ == '__main__':
     # Model
     model = ModelFactory.create(model_config)
     
-    model.train()
+    # model.train()
+    # model.export()
+    model.evaluate()
     # model.validate()
 
     # prediction

@@ -34,6 +34,14 @@ class Model(ABC):
     @abstractmethod
     def categories(self) -> None:
         raise NotImplementedError
+   
+    @abstractmethod
+    def evaluate(self) -> Any:
+        raise NotImplementedError
+
+    @abstractmethod
+    def export(self) -> Any:
+        raise NotImplementedError
 
     @abstractmethod
     def info(self) -> None:

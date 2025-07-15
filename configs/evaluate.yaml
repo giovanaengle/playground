@@ -1,0 +1,7 @@
+params:
+  imgsz: 640 # The input image size for the model. Can be a single integer for square images or a tuple (width, height) for non-square, e.g., (640, 480).
+  half: False # Enables FP16 (half-precision) inference, reducing memory usage and possibly increasing speed on compatible hardware. Use half=True to enable.
+  int8: False # Activates INT8 quantization for further optimized performance on supported devices, especially useful for edge devices. Set int8=True to use.
+  device: mps # Defines the computation device(s) for benchmarking, such as "cpu" or "cuda:0".
+  verbose: False # Controls the level of detail in logging output. Set verbose=True for detailed logs.
+  format: '' # Benchmark the model on a single export format. i.e format=onnx

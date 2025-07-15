@@ -36,6 +36,12 @@ model:
   output: .pipeline/vehicle/models
   task: detect
   weights:
+  evaluate:
+    config: configs/evaluate.yaml
+    data: .pipeline/vehicle/dataset/data.yaml
+  export:
+    config: configs/export.yaml
+    data: .pipeline/vehicle/dataset/data.yaml
   prediction:
     config: configs/prediction.yaml
     top5: false # applied only for classification results

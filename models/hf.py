@@ -20,6 +20,12 @@ class HfModel(Model):
     def categories(self) -> None:
         raise NotImplementedError
 
+    def evaluate(self) -> Any:
+        raise NotImplementedError
+
+    def export(self) -> Any:
+        raise NotImplementedError
+
     def info(self) -> None:
         raise NotImplementedError
 
