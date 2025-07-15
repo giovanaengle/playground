@@ -1,31 +1,11 @@
 from abc import abstractmethod
-from enum import Enum
 import math
 from shutil import rmtree
 
 from common import Config
+from core import TaskType
 from data import Data
 
-
-class DatasetFormat(Enum):
-    CLASSIFY = 'classify'
-    DETECT = 'detect'
-    POSE = 'pose'
-    SEGMENT = 'segment'
-
-    @staticmethod
-    def from_str(s: str) -> 'DatasetFormat':
-        dfs: list[DatasetFormat] = [
-            DatasetFormat.CLASSIFY,
-            DatasetFormat.DETECT,
-            DatasetFormat.POSE,
-            DatasetFormat.SEGMENT,
-        ]
-        for df in dfs:
-            if s == df.value:
-                return df
-
-        raise Exception(f'unknown dataset format: {s}')
 
 class Dataset:
     test: list[Data] = []
@@ -38,8 +18,8 @@ class Dataset:
 
         self.balance = config.bool('balance')
         self.classes = classes
-        self.format = DatasetFormat.from_str(config.str('task'))
-        self.path = config.path('path')
+        self.format = TaskType.from_str(config.str('task'))
+        self.path = config.path('output')
         self.split = config.floats('split') 
 
     @abstractmethod

@@ -136,9 +136,14 @@ class DirInput(Input):
         self.files = []
         self.path = path
         
-        self.files.extend(self.path.glob('images/*.jpg'))
-        self.files.extend(self.path.glob('images/*.jpeg'))
-        self.files.extend(self.path.glob('images/*.png'))
+        if path.name == 'images':
+            self.files.extend(self.path.glob('*.jpg'))
+            self.files.extend(self.path.glob('*.jpeg'))
+            self.files.extend(self.path.glob('*.png'))
+        else:
+            self.files.extend(self.path.glob('images/*.jpg'))
+            self.files.extend(self.path.glob('images/*.jpeg'))
+            self.files.extend(self.path.glob('images/*.png'))
         
         if not len(self.files):
             self.files.extend(self.path.glob('texts/*.txt'))

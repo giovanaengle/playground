@@ -88,6 +88,9 @@ class Annotations(Media):
                 self.add(anno)
 
     def save(self, name: str) -> None:
+        if not self.items:
+            return
+        
         path = self.parent.joinpath(f'{name}{self.suffix}')
         with open(path, 'w', encoding='utf-8') as file:
             for anno in self.items:

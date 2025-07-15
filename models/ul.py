@@ -5,7 +5,8 @@ from ultralytics.engine.results import Results
 from ultralytics.utils import metrics
 
 from common import Config
-from data import Annotation, Annotations, Bbox, Media, Points2D
+from core import TaskType
+from data import Annotation, Bbox, Points2D
 from .model import Model
 
 
@@ -36,57 +37,6 @@ class ULModel(Model):
         settings.update(**kwargs)
         print(f'Settings: {settings}')
 
-    def _to_annotation(self, results: Results) -> Annotations:
-        if not results:
-            return 
-        
-        bbox = None
-        points = None
-
-        # check and collect for classification results
-        if results.probs:
-            classes = results.names
-            class_id = results.probs.top1
-            class_name = classes[class_id]
-            confidence = results.probs.top1conf.tolist()
-        
-        # check and collect for detection results
-        elif results.boxes:
-            bbox = results.boxes.xyxy.tolist()[0]
-            class_id = results.boxes.id.tolist()[0]
-            class_name = results.boxes.cls.tolist()[0]
-            confidence = results.boxes.conf.tolist()[0]
-
-        # check and collect for oriented detection results
-        elif results.obb:
-            bbox = results.obb.xyxy.tolist()[0]
-            bbox = Bbox(coords=bbox[:5], orientation=bbox[5])
-            class_id = results.obb.id.tolist()[0]
-            class_name = results.obb.cls.tolist()[0]
-            confidence = results.obb.conf.tolist()[0]
-
-        # check and collect for segmentation results
-        if results.masks:
-            points = results.masks.xy.tolist()[0]
-
-        # check and collect for keypoints results
-        elif results.keypoints:
-            points = results.keypoints.xy.tolist()[0]
-
-        confidence = round(confidence, 4)
-        if points:
-            points = Points2D(coords=points)
-
-        annotation = Annotation(
-            bbox=bbox,
-            class_id=class_id,
-            class_name=class_name,
-            confidence=confidence,
-            points=points
-        )
-
-        return annotation
-
     def categories(self) -> None:
         if self.model:
             self.classes = self.model.model.names
@@ -106,21 +56,157 @@ class ULModel(Model):
         print(f'Loading model architecture {self.name} \n')
 
         if self.weights:
-            self.model = architecture(self.path).load(self.weights)
+            self.model = architecture(self.input).load(self.weights)
         else:
-            self.model = architecture(self.path)
+            self.model = architecture(self.input)
 
-    async def predict(self, data: Media) -> Annotations:
-        kwargs = self.config.dict('predict')
-        results = self.model(source=data, **kwargs)
-        return self._to_annotation(results[0])
-    
-    def train(self) -> metrics:
-        kwargs = self.config.dict('train')
-        results = self.model.train(**kwargs)
+    def predict(self, data: Any) -> Results:
+        config = self.config.sub('prediction')
+        output = self.config.str('output')
+        project = f'{output}/predict'
+        
+        predict_config = Config(path=config.str('config'))
+        kwargs = predict_config.dict('params')
+
+        results = self.model(source=data, project=project, **kwargs)
         return results
+    
+    def to_annotations(self, results: Results) -> list[Annotation]:
+        if self.task == TaskType.CLASSIFY:
+            config = self.config.sub('prediction')
+            top5 = config.bool('top5')
+            return ULPrediction.from_classify(results, top5)
+        if self.task == TaskType.DETECT:
+            return ULPrediction.from_detect(results)
+        if self.task == TaskType.POSE:
+            return ULPrediction.from_pose(results)
+        if self.task == TaskType.SEGMENT:
+            return ULPrediction.from_segment(results)
+
+    def train(self) -> metrics:
+        config = self.config.sub('train')
+        data = config.str('data')
+        project = self.config.str('output')
+        
+        train_config = Config(path=config.str('config'))
+        kwargs = train_config.dict('params')
+
+        results = self.model.train(data=data, project=project, **kwargs)
+        print(results)
 
     def validate(self) -> metrics:
-        kwargs = self.config.dict('validate')
-        metrics = self.model.val(**kwargs)
-        return metrics
+        config = self.config.sub('validation')
+        data = config.str('data')
+        project = self.config.str('output')
+        
+        val_config = Config(path=config.str('config'))
+        kwargs = val_config.dict('params')
+
+        metrics = self.model.val(data=data, project=project, **kwargs)
+        print(metrics)
+
+class ULPrediction:
+    @staticmethod
+    def from_classify(results: Results, top5: bool = False) -> list[Annotation]:
+        if not results.probs:
+            return
+        
+        items = []
+ 
+        classes = results.names
+
+        if top5:
+            class_ids = results.probs.top5
+            confidences = results.probs.top5conf.tolist()
+            for index, class_id in enumerate(class_ids):
+                anno = Annotation(
+                    class_id = class_id,
+                    class_name = classes[class_id],
+                    confidence = round(confidences[index], 4),
+                )
+                items.append(anno)
+        else:
+            class_id = results.probs.top1
+            confidence = results.probs.top1conf.tolist()
+            class_name = classes[class_id]
+
+            anno = Annotation(
+                class_id = class_id,
+                class_name = class_name,
+                confidence = round(confidence, 4),
+            )
+            items.append(anno)
+        
+        return items
+    
+    @staticmethod
+    def from_detect(results: Results) -> list[Annotation]:
+        items = []
+
+        classes = results.names
+        
+        if results.obb:
+            for box in results.obb:
+                bbox = box.xyxy.tolist()[0]
+                bbox = Bbox(coords=bbox[:5], orientation=bbox[5])
+                class_id = int(box.cls.tolist()[0])
+                anno = Annotation(
+                    bbox = bbox,
+                    class_id = class_id,
+                    class_name = classes[class_id],
+                    confidence = round(box.conf.tolist()[0], 4),
+                )
+                items.append(anno)
+
+        elif results.boxes:
+            for box in results.boxes:
+                bbox = box.xyxy.tolist()[0]
+                bbox = Bbox(coords=bbox)
+                class_id = int(box.cls.tolist()[0])
+
+                anno = Annotation(
+                    bbox = bbox,
+                    class_id = class_id,
+                    class_name = classes[class_id],
+                    confidence = round(box.conf.tolist()[0], 4),
+                )
+                items.append(anno)
+
+        else:
+            return
+         
+        return items
+
+    @staticmethod
+    def from_pose(results: Results) -> list[Annotation]:
+        if not results.keypoints:
+            return
+        
+        boxes: list[Annotation] = ULPrediction.from_detect(results)
+        if not items:
+            return
+        
+        items = []
+        for anno in boxes:
+            points = results.keypoints.xy.tolist()[0]
+            anno.points = Points2D(coords=points)
+            items.append(anno)
+        
+        return items
+        
+    @staticmethod
+    def from_segment(results: Results) -> list[Annotation]:
+        if not results.masks:
+            return
+        
+        boxes: list[Annotation] = ULPrediction.from_detect(results)
+        if not boxes:
+            return
+        
+        items = []
+        for anno in boxes:
+            points = results.masks.xy.tolist()[0]
+            anno.points = Points2D(coords=points)
+            items.append(anno)
+
+        return items

@@ -1,10 +1,10 @@
-from shutil import rmtree
 from ultralytics.utils.downloads import download
 from yaml import dump
 
 from common import Config
+from core import TaskType
 from data import Annotation, Data
-from .dataset import Dataset, DatasetFormat
+from .dataset import Dataset
 
 
 class ULDataset(Dataset):
@@ -88,7 +88,7 @@ class ULDataset(Dataset):
         super().prepare(data)
 
     def save(self) -> None:
-        if self.format == DatasetFormat.CLASSIFY:
+        if self.format == TaskType.CLASSIFY:
             self._save_classify()
         else:
             self._save_other()
@@ -96,7 +96,7 @@ class ULDataset(Dataset):
     def setup(self) -> None:
         super().setup()
 
-        if self.format == DatasetFormat.CLASSIFY:
+        if self.format == TaskType.CLASSIFY:
             self._setup_classify()
         else:
             self._setup_other()

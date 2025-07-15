@@ -1,8 +1,5 @@
-experiment:
-  name: vehicle
-
 data:
-  input: .experiments/vehicle/
+  input: .pipeline/vehicle/images
   process:
     processes:
       - name: rename
@@ -10,7 +7,6 @@ data:
         params:
           - 640
     processor: linear
-  
 dataset:
   balance: false
   classes:
@@ -26,19 +22,26 @@ dataset:
     - Truck
     - Van
   framework: ultralytics
-  input: .experiments/vehicle/storage
-  path: .experiments/vehicle/dataset
+  input: .pipeline/vehicle/storage
+  output: .pipeline/vehicle/dataset
   split: # test, train, valid
     - 0.2
     - 0.6
     - 0.2
   task: detect
-
 model:
-  architecture: fastsam
+  architecture: yolo
   framework: ultralytics
-  path: hub/models/FastSAM-s.pt
+  input: .pipeline/vehicle/models/train/weights/best.pt
+  output: .pipeline/vehicle/models
   task: detect
-  weights: 
-
-storage: .experiments/vehicle/storage
+  weights:
+  prediction:
+    config: configs/prediction.yaml
+    top5: false # applied only for classification results
+  train:
+    config: configs/train.yaml
+    data: .pipeline/vehicle/dataset/data.yaml
+  validation:
+    config: configs/validation.yaml
+    data: .pipeline/vehicle/dataset/data.yaml
