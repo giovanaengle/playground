@@ -7,8 +7,7 @@ from ultralytics.utils.benchmarks import benchmark
 
 
 from common import Config
-from core import TaskType
-from data import Annotation, Bbox, Points2D
+from data import Annotation, Bbox, Points2D, TaskType
 from .model import Model
 
 
@@ -48,7 +47,7 @@ class ULModel(Model):
     def evaluate(self) -> None:
         config = self.config.sub('evaluate')
         data = config.str('data')
-        
+
         evaluate_config = Config(path=config.str('config'))
         kwargs = evaluate_config.dict('params')
 
@@ -169,6 +168,8 @@ class ULPrediction:
             for box in results.obb:
                 bbox = box.xyxy.tolist()[0]
                 bbox = Bbox(coords=bbox[:5], orientation=bbox[5])
+                bbox.to_int()
+
                 class_id = int(box.cls.tolist()[0])
                 anno = Annotation(
                     bbox = bbox,
@@ -182,8 +183,9 @@ class ULPrediction:
             for box in results.boxes:
                 bbox = box.xyxy.tolist()[0]
                 bbox = Bbox(coords=bbox)
-                class_id = int(box.cls.tolist()[0])
+                bbox.to_int()
 
+                class_id = int(box.cls.tolist()[0])
                 anno = Annotation(
                     bbox = bbox,
                     class_id = class_id,
@@ -209,7 +211,10 @@ class ULPrediction:
         items = []
         for anno in boxes:
             points = results.keypoints.xy.tolist()[0]
-            anno.points = Points2D(coords=points)
+            points = Points2D(coords=points)
+            points.to_int()
+
+            anno.points = points
             items.append(anno)
         
         return items
@@ -226,7 +231,10 @@ class ULPrediction:
         items = []
         for anno in boxes:
             points = results.masks.xy.tolist()[0]
-            anno.points = Points2D(coords=points)
+            points = Points2D(coords=points)
+            points.to_int()
+
+            anno.points = points
             items.append(anno)
 
         return items

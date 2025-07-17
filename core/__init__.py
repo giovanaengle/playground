@@ -1,4 +1,4 @@
+from .engine import Engine, EngineFactory
 from .input import InputFactory
-from .task import TaskType
 
-__all__ = ('InputFactory', 'TaskType')
+__all__ = ('Engine', 'EngineFactory', 'InputFactory')

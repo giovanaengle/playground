@@ -91,4 +91,4 @@ class LocalStorage(Storage):
 class StorageFactory:
     @staticmethod
     def create(config: Config) -> Storage:
-        return LocalStorage(path=config.path('storage'))
+        return LocalStorage(path=config.path('output'))

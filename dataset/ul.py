@@ -2,8 +2,7 @@ from ultralytics.utils.downloads import download
 from yaml import dump
 
 from common import Config
-from core import TaskType
-from data import Annotation, Data
+from data import Annotation, Data, TaskType
 from .dataset import Dataset
 
 

@@ -3,8 +3,7 @@ import math
 from shutil import rmtree
 
 from common import Config
-from core import TaskType
-from data import Data
+from data import Data, TaskType
 
 
 class Dataset:

@@ -1,5 +1,6 @@
 data:
   input: .pipeline/vehicle/images
+  output: .pipeline/vehicle/storage
   process:
     processes:
       - name: rename
@@ -37,17 +38,17 @@ model:
   task: detect
   weights:
   evaluate:
-    config: configs/evaluate.yaml
+    config: .configs/evaluate.yaml
     data: .pipeline/vehicle/dataset/data.yaml
   export:
-    config: configs/export.yaml
+    config: .configs/export.yaml
     data: .pipeline/vehicle/dataset/data.yaml
   prediction:
-    config: configs/prediction.yaml
+    config: .configs/prediction.yaml
     top5: false # applied only for classification results
   train:
-    config: configs/train.yaml
+    config: .configs/train.yaml
     data: .pipeline/vehicle/dataset/data.yaml
   validation:
-    config: configs/validation.yaml
+    config: .configs/validation.yaml
     data: .pipeline/vehicle/dataset/data.yaml

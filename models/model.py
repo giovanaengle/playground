@@ -4,8 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from common import Config
-from core.task import TaskType
-from data import Annotations
+from data import Annotations, TaskType
 
 
 class Model(ABC):
