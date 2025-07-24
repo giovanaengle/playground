@@ -18,7 +18,7 @@ class Dataset:
         self.balance = config.bool('balance')
         self.classes = classes
         self.format = TaskType.from_str(config.str('task'))
-        self.path = config.path('output')
+        self.output = config.path('output')
         self.split = config.floats('split') 
 
     @abstractmethod
@@ -84,5 +84,5 @@ class Dataset:
         raise NotImplementedError
 
     def setup(self) -> None:
-        rmtree(self.path, ignore_errors=True, onexc=None)
-        self.path.mkdir(exist_ok=True, parents=True)
+        rmtree(self.output, ignore_errors=True, onexc=None)
+        self.output.mkdir(exist_ok=True, parents=True)

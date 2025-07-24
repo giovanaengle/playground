@@ -1,0 +1,9 @@
+input: .pipeline/vehicle/images
+output: .pipeline/vehicle/storage
+process:
+  processes:
+    - name: rename
+    - name: resize
+      params:
+        - 640
+  processor: linear

@@ -12,13 +12,15 @@ class Model(ABC):
     model: Any | None = None
 
     def __init__(self, config: Config) -> None:
-        self.input = Path(config.str('input'))
+        self.input = Path(config.path('input'))
         if not self.input.exists():
             raise Exception(f'Model path does not exist: {self.input}')
 
         self.config = config
-        self.name = config.str('architecture')
-        self.output = Path(config.str('output'))
+        self.architecture = config.str('architecture')
+        self.data = self.config.path('data')
+        self.output = Path(config.path('output'))
+        self.params = Config(path=config.path('params'))
         self.task = TaskType.from_str(config.str('task'))
         self.weights = config.str('weights')
 
@@ -27,7 +29,6 @@ class Model(ABC):
 
     def _set(self) -> None:
         self.load()
-        self.categories()
         self.info() 
 
     @abstractmethod

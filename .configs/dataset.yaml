@@ -1,0 +1,21 @@
+balance: false
+classes:
+  - ambulance
+  - bicycle
+  - Bus
+  - Jeepney
+  - Motorcycle
+  - Multicab
+  - Pickup
+  - SUV
+  - Sedan
+  - Truck
+  - Van
+framework: ultralytics
+input: .pipeline/vehicle/storage
+output: .pipeline/vehicle/dataset
+split: # test, train, valid
+  - 0.2
+  - 0.6
+  - 0.2
+task: detect

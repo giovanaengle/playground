@@ -45,55 +45,38 @@ class ULModel(Model):
             raise FileNotFoundError(f'Model not found')
 
     def evaluate(self) -> None:
-        config = self.config.sub('evaluate')
-        data = config.str('data')
-
-        evaluate_config = Config(path=config.str('config'))
-        kwargs = evaluate_config.dict('params')
-
-        benchmark(self.model, data=data, **kwargs)
+        kwargs = self.params.sub('evaluate')
+        benchmark(self.model, data=self.data, **kwargs)
 
     def export(self) -> None:
-        config = self.config.sub('export')
-        data = config.str('data')
-        
-        export_config = Config(path=config.str('config'))
-        kwargs = export_config.dict('params')
-
-        self.model.export(data=data, **kwargs)
+        kwargs = self.params.sub('export')
+        self.model.export(data=self.data, **kwargs)
 
     def info(self) -> None:
         if self.model:
-            print(f'Architecture {self.name} technical information')
+            print(f'Architecture {self.architecture} technical information')
             self.model.info()
             print('\n')
         else:
             raise FileNotFoundError(f'Model not found')
 
     def load(self) -> None:
-        architecture = self._create()
-        print(f'Loading model architecture {self.name} \n')
+        model_interface = self._create()
+        print(f'Loading model architecture {self.architecture} \n')
 
         if self.weights:
-            self.model = architecture(self.input).load(self.weights)
+            self.model = model_interface(self.input).load(self.weights)
         else:
-            self.model = architecture(self.input)
+            self.model = model_interface(self.input)
 
     def predict(self, data: Any) -> Results:
-        config = self.config.sub('prediction')
-        output = self.config.str('output')
-        project = f'{output}/predict'
-        
-        predict_config = Config(path=config.str('config'))
-        kwargs = predict_config.dict('params')
-
-        results = self.model(source=data, project=project, **kwargs)
+        kwargs = self.params.sub('predict')
+        results = self.model(source=data, project=f'{self.output}/predict', **kwargs)
         return results
     
     def to_annotations(self, results: Results) -> list[Annotation]:
         if self.task == TaskType.CLASSIFY:
-            config = self.config.sub('prediction')
-            top5 = config.bool('top5')
+            top5 = self.config.bool('top5')
             return ULPrediction.from_classify(results, top5)
         if self.task == TaskType.DETECT:
             return ULPrediction.from_detect(results)
@@ -103,26 +86,14 @@ class ULModel(Model):
             return ULPrediction.from_segment(results)
 
     def train(self) -> metrics:
-        config = self.config.sub('train')
-        data = config.str('data')
-        project = self.config.str('output')
-        
-        train_config = Config(path=config.str('config'))
-        kwargs = train_config.dict('params')
-
-        results = self.model.train(data=data, project=project, **kwargs)
-        print(results)
+        kwargs = self.params.sub('train')
+        results = self.model.train(data=self.data, project=self.output, **kwargs)
+        return results
 
     def validate(self) -> metrics:
-        config = self.config.sub('validation')
-        data = config.str('data')
-        project = self.config.str('output')
-        
-        val_config = Config(path=config.str('config'))
-        kwargs = val_config.dict('params')
-
-        metrics = self.model.val(data=data, project=project, **kwargs)
-        print(metrics)
+        kwargs = self.config.dict('validate')
+        results = self.model.val(data=self.data, project=self.output, **kwargs)
+        return results
 
 class ULPrediction:
     @staticmethod

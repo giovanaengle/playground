@@ -27,8 +27,7 @@ class Context:
         )
 
         # Set up config
-        self.config = Config(path=config_path)
-        self.config.logger = self.logger  # Optional: attach logger manually
+        self.config = Config(path=config_path)  
 
         # Set up metrics
         self.metrics = Metrics(logger=self.logger)

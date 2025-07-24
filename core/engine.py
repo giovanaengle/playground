@@ -1,12 +1,9 @@
-
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
 
 from tqdm import tqdm
 
-from common import Config
+from common import Config, Context, Logger, Metrics
 from data import Job, ProcessFactory, Processor
 from dataset import Dataset, DatasetFactory
 from .input import Input, InputFactory
@@ -14,47 +11,42 @@ from models import Model, ModelFactory
 from .storage import Storage, StorageFactory
 
 
-# Abstracts
+# === Abstracts ===
 
-@dataclass
 class Engine(ABC):
-    config: Config
+    def __init__(self, context: Context):
+        self.context = context
+        self.config: Config = context.config
+        self.logger: Logger = context.logger
+        self.metrics: Metrics = context.metrics
 
     @abstractmethod
     def run(self) -> None:
-        NotImplemented
+        pass
 
-@dataclass
 class DataEngine(Engine):
-    input: Input
-    storage: Storage
+    def __init__(self, context: Context):
+        super().__init__(context)
+        self.input: Input = InputFactory.create(self.config)
+        self.storage: Storage = StorageFactory.create(self.config)
 
-@dataclass
 class ModelEngine(Engine):
-    model: Model
+    def __init__(self, context: Context):
+        super().__init__(context)
+        self.model: Model = ModelFactory.create(self.config)
 
-# Engines
+# === Data Engines ===
 
-@dataclass
-class EvaluateEngine(ModelEngine):
-    def run(self) -> None:
-        self.model.evaluate()
-
-@dataclass
-class ExportEngine(ModelEngine):
-    def run(self) -> None:
-        self.model.export()
-
-@dataclass
 class DatasetEngine(DataEngine):
-    dataset: Dataset
-
+    def __init__(self, context: Context):
+        super().__init__(context)
+        self.dataset: Dataset = DatasetFactory.create(self.config)
+        
     def run(self) -> None:
         with tqdm(total=self.input.size()) as pbar:
             for data in self.input.load():
                 data.annotations.load()
                 self.storage.add(data)
-
                 pbar.set_description(f'{data.name}')
                 pbar.update(1)
 
@@ -62,110 +54,95 @@ class DatasetEngine(DataEngine):
         self.dataset.prepare(self.storage.all())
         self.dataset.save()
 
-@dataclass
 class IngestEngine(DataEngine):
-    process: Processor
+    def __init__(self, context: Context):
+        super().__init__(context)
+        self.process: Processor = ProcessFactory.create(self.config.sub('process'))
 
     def run(self) -> None:
         with tqdm(total=self.input.size()) as pbar:
             for data in self.input.load():
                 data.load()
-
-                job: Job = self.process.process(data=data)
-                
+                job: Job = self.process.process(data=data)    
                 self.storage.add(data=job.current)
                 self.storage.save()
                 self.storage.clear()
-
                 pbar.set_description(f'{data.name}')
                 pbar.update(1)
 
-@dataclass
-class PredictEngine(DataEngine):
-    model: Model
+# === Model Engines ===
+
+class EvaluateEngine(ModelEngine):
+    def run(self) -> None:
+        self.model.evaluate()
+
+class ExportEngine(ModelEngine):
+    def run(self) -> None:
+        self.model.export()
+
+class TrainEngine(ModelEngine):
+    def run(self) -> None:
+        results = self.model.train()
+        # TODO: add results to report
+
+class ValidateEngine(ModelEngine):
+    def run(self) -> None:
+        results = self.model.validate()
+        # TODO: add results to report
+
+
+# === Hybrid Engines ===
+
+class PredictEngine(DataEngine, ModelEngine):
+    def __init__(self, context: Context):
+        super().__init__(context)
 
     def run(self) -> None:
-        config = self.config.sub('model')
-        dst_path = config.path('output').joinpath('predict')
+        dst_path = self.config.sub('model').path('output').joinpath('predict')
         dst_path.mkdir(parents=True, exist_ok=True)
-        
+
         with tqdm(total=self.input.size()) as pbar:
             for data in self.input.load():
                 data.image.load()
                 results = self.model.predict(data.image.content)
                 if results:
                     data.image = None
-                    data.annotations.items = self.model.to_annotations(results[0]) # only one image per batch
+                    data.annotations.items = self.model.to_annotations(results[0])
                     data.annotations.parent = dst_path
                     data.annotations.save(data.name)
                     self.storage.add(data)
-
                 pbar.set_description(f'{data.name}')
                 pbar.update(1)
 
-        ts: str = datetime.now().replace(microsecond=0).isoformat()
+        ts = datetime.now().replace(microsecond=0).isoformat()
         results_path = dst_path.joinpath(f'{ts}.csv')
-        
-        print(f'Preparing csv file saved at {dst_path}')
+
+        self.logger.info(f'Saving predictions to: {results_path}')
         with open(results_path, 'w') as file:
             file.write('image,class_name,class_score\n')
             for data in self.storage.all():
                 for anno in data.annotations.items:
                     file.write(f'{data.name},{anno.class_name},{anno.confidence}\n')
 
-@dataclass
-class TrainEngine(ModelEngine):
-    def run(self) -> None:
-        self.model.train()
-
-@dataclass
-class ValidateEngine(ModelEngine):
-    def run(self) -> None:
-        self.model.validate()
+# === Factory ===
 
 class EngineFactory:
     @staticmethod
-    def create(config: Config, engine: str) -> Engine:
-        if engine == 'dataset':
-            return DatasetEngine(
-                config=config,
-                dataset=DatasetFactory.create(config=config.sub('dataset')),
-                input=InputFactory.create(config=config.sub('dataset')),
-                storage=StorageFactory.create(config=config.sub('dataset')),
-            )
-        elif engine == 'evaluate':
-            return EvaluateEngine(
-                config=config,
-                model=ModelFactory.create(config=config.sub('model')),
-            )
-        elif engine == 'export':
-            return ExportEngine(
-                config=config,
-                model=ModelFactory.create(config=config.sub('model')),
-            )
-        elif engine == 'ingest':
-            return IngestEngine(
-                config=config,
-                input=InputFactory.create(config=config.sub('data')),
-                process=ProcessFactory.create(config=config.sub('data')),
-                storage=StorageFactory.create(config=config.sub('data')),
-            )
-        elif engine == 'predict':
-            return PredictEngine(
-                config=config,
-                input=InputFactory.create(config=config.sub('dataset')),
-                model=ModelFactory.create(config=config.sub('model')),
-                storage=StorageFactory.create(config=config.sub('model')),
-            )
-        elif engine == 'train':
-            return TrainEngine(
-                config=config,
-                model=ModelFactory.create(config=config.sub('model')),
-            )
-        elif engine == 'validate':
-            return ValidateEngine(
-                config=config,
-                model=ModelFactory.create(config=config.sub('model')),
-            )
-        else:
-            raise Exception(f'unknown engine type: {engine}')
+    def create(context: Context, engine: str) -> Engine:
+        match engine:
+            case 'dataset':
+                return DatasetEngine(context)
+            case 'evaluate':
+                return EvaluateEngine(context)
+            case 'export':
+                return ExportEngine(context)
+            case 'ingest':
+                return IngestEngine(context)
+            case 'predict':
+                return PredictEngine(context)
+            case 'train':
+                return TrainEngine(context)
+            case 'validate':
+                return ValidateEngine(context)
+            case _:
+                raise ValueError(f'Unknown engine type: {engine}')
