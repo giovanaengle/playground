@@ -30,11 +30,11 @@ This is the development roadmap for the Playground project: a modular framework 
 ## ⚙️ 3. Core Features
 
 ### Common Utilities
-- [ ] Add centralized **logging utility** (structured, color-coded logs)
-- [ ] Add custom **exception classes** with context-aware errors
+- [x] Add centralized **logging utility** (structured, color-coded logs)
+- [x] Add custom **exception classes** with context-aware errors
 
 ### Task Orchestration
-- [ ] Improve `task.py` runner to support:
+- [ ] Improve `run .py` runner to support:
   - [ ] Multi-step pipelines
   - [ ] Validation of config structure
   - [ ] Timing and benchmarking per stage
@@ -64,7 +64,7 @@ This is the development roadmap for the Playground project: a modular framework 
 ## 📦 6. Framework Integration
 
 - [x] Integrate Ultralytics (YOLOv8) for train/eval/export
-- [x] Integrate Hugging Face (transformers, datasets)
+- [ ] Integrate Hugging Face (transformers, datasets)
 - [ ] Add Roboflow connector
 - [ ] Define abstract interface for adding more frameworks
 

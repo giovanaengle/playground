@@ -1,11 +1,10 @@
-# common/logger.py
-
 import logging
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Optional
 
+from rich.logging import RichHandler
 
 class LogLevel(int, Enum):
     DEBUG = logging.DEBUG
@@ -28,20 +27,20 @@ class Logger:
         self.logger.setLevel(level.value)
         self.logger.propagate = False  # Avoid duplicate logs in global root
 
-        formatter = logging.Formatter(
-            fmt='%(asctime)s [%(levelname)s] :%(name)s: %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-
         # Clear old handlers if reused (e.g. in notebooks or tests)
         self.logger.handlers.clear()
 
         if log_to_console:
-            console_handler = logging.StreamHandler()
-            console_handler.setFormatter(formatter)
-            self.logger.addHandler(console_handler)
+            rich_handler = RichHandler(rich_tracebacks=True, markup=True)
+            rich_handler.setLevel(level.value)
+            self.logger.addHandler(rich_handler)
 
         if log_to_file:
+            formatter = logging.Formatter(
+                fmt='%(asctime)s [%(levelname)s] :%(name)s: %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S'
+            )
+
             log_dir = Path('.pipeline/logs')
             log_dir.mkdir(parents=True, exist_ok=True)
 
