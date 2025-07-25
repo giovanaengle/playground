@@ -1,9 +1,9 @@
 architecture: yolo
-data: .pipeline/vehicle/dataset/data.yaml
+data: .configs/ingest.yaml
 framework: ultralytics
-input: .pipeline/vehicle/models/train/weights/best.pt
+path: .pipeline/vehicle/models/train/weights/best.pt
 output: .pipeline/vehicle/models
-params: .config/ultralytics.yaml
+params: .configs/ultralytics.yaml
 task: detect
 top5: false # applied only for classification results
 weights:

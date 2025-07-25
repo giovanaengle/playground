@@ -33,7 +33,7 @@ class Dataset:
                     counters[anno.class_id] = 1
                 else:
                     counters[anno.class_id] += 1
-
+        counters = dict(sorted(counters.items()))
         print(f'Dataset distribution: {counters}')
 
         # Balance

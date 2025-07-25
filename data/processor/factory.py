@@ -39,7 +39,7 @@ class ProcessFactory:
     @staticmethod
     def create(config: Config) -> Processor:
         processes: list[Process] = []
-        for proc in config.sub('process').dicts('processes'):
+        for proc in config.dicts('processes'):
             if proc['name'] == 'crop':
                 processes.append(CropProcess())
             elif proc['name'] == 'mask':
@@ -49,7 +49,7 @@ class ProcessFactory:
             elif proc['name'] == 'resize':
                 processes.append(ResizeProcess(dimensions=proc['params']))
 
-        processor: str = config.sub('process').str('processor')
+        processor: str = config.str('processor')
         if processor == 'linear':
             return LinearProcessor(processes=processes)
         else:

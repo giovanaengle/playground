@@ -153,38 +153,37 @@ class DirInput(Input):
             raise Exception(f'Data not found in the path structure: {path}. Data must be in on of the folders: images, labels, or texts')
 
     def load(self) -> Generator[Data, None, None]:
+        data: Data = Data('')
         path: Path
-        for path in self.files:
-            annotations, image, text = None, None, None
 
-            data: Data
+        for path in self.files:
             if path.parent.name == 'images':
-                image = self._load_img(path=path)
+                data.image = self._load_img(path=path)
+                name = data.image.name
+
                 path = str(path).replace(path.suffix, '.txt')
                 path = Path(path.replace('images', 'annotations'))
                 if path.exists():
-                    annotations = self._load_anno(path=path)
+                    data.annotations = self._load_anno(path=path)
+
                 path = Path(str(path).replace('annotations', 'texts'))
                 if path.exists():
-                    text = self._load_text(path=path)
-                name = image.name
+                    data.text = self._load_text(path=path)
+            
             elif path.parent.name == 'texts':
-                text = self._load_text(path=path)
+                data.text = self._load_text(path=path)
+                name = data.text.name
+                
                 path = Path(str(path).replace('texts', 'annotations'))
                 if path.exists():
-                    annotations = self._load_anno(path=path)
-                name = text.name
-
+                    data.annotations = self._load_anno(path=path)
+            
             elif path.parent.name == 'annotations':
-                annotations = self._load_anno(path=path)
-                name = annotations.name
+                data.annotations = self._load_anno(path=path)
+                name = data.annotations.name
 
-            data: Data = Data(
-                annotations=annotations,
-                image=image,
-                name=name,
-                text=text,
-            )
+            data.name=name
+
             yield data
 
     def size(self) -> int:

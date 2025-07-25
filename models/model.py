@@ -12,9 +12,9 @@ class Model(ABC):
     model: Any | None = None
 
     def __init__(self, config: Config) -> None:
-        self.input = Path(config.path('input'))
-        if not self.input.exists():
-            raise Exception(f'Model path does not exist: {self.input}')
+        self.path = Path(config.path('path'))
+        if not self.path.exists():
+            raise Exception(f'Model path does not exist: {self.path}')
 
         self.config = config
         self.architecture = config.str('architecture')

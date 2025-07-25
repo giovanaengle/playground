@@ -25,10 +25,10 @@ class ULModel(Model):
             'yoloworld': YOLOWorld,
         }
 
-        if self.name in networks:
-            return networks[self.name]       
+        if self.architecture in networks:
+            return networks[self.architecture]       
         else:
-            raise Exception(f'Model not implemented: {self.name}')
+            raise Exception(f'Model not implemented: {self.architecture}')
     
     def _set(self) -> None:
         super()._set()
@@ -45,11 +45,11 @@ class ULModel(Model):
             raise FileNotFoundError(f'Model not found')
 
     def evaluate(self) -> None:
-        kwargs = self.params.sub('evaluate')
+        kwargs = self.params.dict('evaluate')
         benchmark(self.model, data=self.data, **kwargs)
 
     def export(self) -> None:
-        kwargs = self.params.sub('export')
+        kwargs = self.params.dict('export')
         self.model.export(data=self.data, **kwargs)
 
     def info(self) -> None:
@@ -65,12 +65,12 @@ class ULModel(Model):
         print(f'Loading model architecture {self.architecture} \n')
 
         if self.weights:
-            self.model = model_interface(self.input).load(self.weights)
+            self.model = model_interface(self.path).load(self.weights)
         else:
-            self.model = model_interface(self.input)
+            self.model = model_interface(self.path)
 
     def predict(self, data: Any) -> Results:
-        kwargs = self.params.sub('predict')
+        kwargs = self.params.dict('predict')
         results = self.model(source=data, project=f'{self.output}/predict', **kwargs)
         return results
     
@@ -86,12 +86,12 @@ class ULModel(Model):
             return ULPrediction.from_segment(results)
 
     def train(self) -> metrics:
-        kwargs = self.params.sub('train')
+        kwargs = self.params.dict('train')
         results = self.model.train(data=self.data, project=self.output, **kwargs)
         return results
 
     def validate(self) -> metrics:
-        kwargs = self.config.dict('validate')
+        kwargs = self.params.dict('validate')
         results = self.model.val(data=self.data, project=self.output, **kwargs)
         return results
 

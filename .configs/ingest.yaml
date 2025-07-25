@@ -1,4 +1,4 @@
-input: .pipeline/vehicle/images
+input: .pipeline/vehicle/dataset/test
 output: .pipeline/vehicle/storage
 process:
   processes:

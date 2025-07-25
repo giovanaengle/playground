@@ -4,7 +4,7 @@ from datetime import datetime
 from tqdm import tqdm
 
 from common import Config, Context, Logger, Metrics
-from data import Job, ProcessFactory, Processor
+from data import Annotations, Job, ProcessFactory, Processor
 from dataset import Dataset, DatasetFactory
 from .input import Input, InputFactory
 from models import Model, ModelFactory
@@ -80,6 +80,45 @@ class ExportEngine(ModelEngine):
     def run(self) -> None:
         self.model.export()
 
+class PredictEngine(ModelEngine):
+    def __init__(self, context: Context):
+        super().__init__(context)
+        data_config: Config = Config(path=self.config.path('data'))
+        self.input: Input = InputFactory.create(data_config)
+
+    def run(self) -> None:
+        dst_path = self.config.path('output').joinpath('predict')
+        dst_path.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now().replace(microsecond=0).isoformat()
+        results_path = dst_path.joinpath(f'{ts}.csv')
+
+        self.logger.info(f'Saving predictions to: {results_path}')
+        with open(results_path, 'a',newline='') as file:
+            file.write('image,class_name,class_score\n')
+
+            with tqdm(total=self.input.size()) as pbar:
+                for data in self.input.load():
+                    data.image.load()
+                    results = self.model.predict(data.image.content)
+                    if results:
+                        predictions = self.model.to_annotations(results[0]) 
+
+                        data.annotations = Annotations(
+                            items=predictions,
+                            name=data.name,
+                            parent=dst_path,
+                            suffix=''
+                        )
+                        data.annotations.save(data.name)
+
+                        for anno in data.annotations.items:
+                            file.write(f'{data.name},{anno.class_name},{anno.confidence}\n')
+
+
+                    pbar.set_description(f'{data.name}')
+                    pbar.update(1)
+
+                
 class TrainEngine(ModelEngine):
     def run(self) -> None:
         results = self.model.train()
@@ -89,40 +128,6 @@ class ValidateEngine(ModelEngine):
     def run(self) -> None:
         results = self.model.validate()
         # TODO: add results to report
-
-
-# === Hybrid Engines ===
-
-class PredictEngine(DataEngine, ModelEngine):
-    def __init__(self, context: Context):
-        super().__init__(context)
-
-    def run(self) -> None:
-        dst_path = self.config.sub('model').path('output').joinpath('predict')
-        dst_path.mkdir(parents=True, exist_ok=True)
-
-        with tqdm(total=self.input.size()) as pbar:
-            for data in self.input.load():
-                data.image.load()
-                results = self.model.predict(data.image.content)
-                if results:
-                    data.image = None
-                    data.annotations.items = self.model.to_annotations(results[0])
-                    data.annotations.parent = dst_path
-                    data.annotations.save(data.name)
-                    self.storage.add(data)
-                pbar.set_description(f'{data.name}')
-                pbar.update(1)
-
-        ts = datetime.now().replace(microsecond=0).isoformat()
-        results_path = dst_path.joinpath(f'{ts}.csv')
-
-        self.logger.info(f'Saving predictions to: {results_path}')
-        with open(results_path, 'w') as file:
-            file.write('image,class_name,class_score\n')
-            for data in self.storage.all():
-                for anno in data.annotations.items:
-                    file.write(f'{data.name},{anno.class_name},{anno.confidence}\n')
 
 # === Factory ===
 
