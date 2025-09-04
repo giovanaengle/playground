@@ -1,11 +1,10 @@
-from typing import Optional
+from play.utils.date import miliseconds
 
 from .logger import Logger
-from utils.date import miliseconds
 
 
 class Metrics:
-    def __init__(self, logger: Optional[Logger] = None) -> None:
+    def __init__(self, logger: Logger | None = None) -> None:
         self.logger = logger
         self.counters: dict[str, int] = {}
         self.starts: dict[str, int] = {}

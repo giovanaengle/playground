@@ -8,7 +8,7 @@ from typing import Optional
 
 from rich.logging import RichHandler
 
-from api.context import request_id_ctx
+from play.api.context import request_id_ctx
 
 
 class JsonFormatter(logging.Formatter):

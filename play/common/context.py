@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 from .config import Config
 from .logger import Logger, LogLevel
@@ -10,15 +9,20 @@ class Context:
     def __init__(
         self,
         config_path: str | Path,
-        file_path: str | Path,
         log_level: LogLevel = LogLevel.INFO,
+        log_to_file: bool = False,
         prefix: str | None = None,
         section: str = 'main') -> None:
 
-        self.config = Config(path=config_path)  
+        self.config = Config(path=config_path)
+        if log_to_file:
+            project = self.config.str('project')
+            file_path = self.config.path('parent').joinpath(project, 'logs')
+        else:
+            file_path = None
         self.logger = Logger(
             path=file_path,
-            level=log_level,
+            log_level=log_level,
             prefix=prefix,
             section=section,
         )
